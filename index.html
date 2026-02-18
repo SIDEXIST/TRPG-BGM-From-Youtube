@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MATIDA BGM SYNC - Final</title>
+    <title>MATIDA BGM SYNC - Stability</title>
     <style>
         :root { --primary: #bb86fc; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; }
         body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
@@ -13,9 +13,8 @@
         .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; }
         input, button { background: #2c2c2c; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 6px; margin: 5px 0; width: 100%; box-sizing: border-box; }
         button { cursor: pointer; background: #3700b3; border: none; font-weight: bold; }
-        /* 호스트 전용 UI: 기본적으로 숨김 */
         .host-only { display: none; }
-        #log-area { font-size: 0.7rem; color: #888; background: #000; padding: 10px; border-radius: 5px; height: 80px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; }
+        #log-area { font-size: 0.7rem; color: #888; background: #000; padding: 10px; border-radius: 5px; height: 100px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; }
         .playlist-item { padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
     </style>
 </head>
@@ -24,7 +23,6 @@
     <div id="audio-unlock" onclick="startSession()">
         <div style="font-size: 60px; margin-bottom: 20px;">🎧</div>
         <b>클릭하여 BGM 세션 시작</b>
-        <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">(소리 권한을 활성화합니다)</p>
     </div>
 
     <div class="container">
@@ -32,7 +30,7 @@
             <h2 style="color: var(--primary); margin: 0 0 15px 0;">MATIDA SYNC <span id="room-id" style="font-size: 0.7rem; color: #666;"></span></h2>
             <div id="player-wrapper"><div id="player"></div></div>
             <div style="margin-bottom: 15px;">
-                <p style="font-size: 0.8rem; color: #888; margin: 0;">현재 재생 중</p>
+                <p style="font-size: 0.8rem; color: #888; margin: 0;">현재 재생</p>
                 <div id="current-title" style="color: #03dac6; font-weight: bold; font-size: 1.1rem;">대기 중...</div>
             </div>
             <div id="host-controls" class="host-only" style="display: flex; gap: 5px;">
@@ -43,23 +41,23 @@
         </div>
 
         <div id="host-panel" class="host-only card">
-            <h3 style="margin: 0 0 10px 0; font-size: 1rem;">GM 관리 도구</h3>
-            <input type="text" id="yt-url" placeholder="유튜브 주소 (URL)">
-            <input type="text" id="custom-title" placeholder="BGM 제목 (예: [전투] 보스전)">
-            <label style="font-size: 0.8rem;"><input type="checkbox" id="is-loop"> 한곡 반복 설정</label>
-            <button onclick="addToPlaylist()" style="background: #444;">목록에 추가</button>
+            <h3 style="margin: 0 0 10px 0; font-size: 1rem;">GM 관리</h3>
+            <input type="text" id="yt-url" placeholder="유튜브 주소 복사/붙여넣기">
+            <input type="text" id="custom-title" placeholder="표시할 제목 (예: 전투 1)">
+            <label style="font-size: 0.8rem;"><input type="checkbox" id="is-loop"> 한곡 반복</label>
+            <button onclick="addToPlaylist()" style="background: #444;">추가</button>
             <div style="display: flex; gap: 5px; margin-top:5px;">
-                <button onclick="savePlaylist()" style="background:#333; font-size: 0.8rem;">💾 리스트 저장</button>
-                <button onclick="document.getElementById('file-input').click()" style="background:#333; font-size: 0.8rem;">📂 불러오기</button>
+                <button onclick="savePlaylist()" style="background:#333; font-size: 0.7rem;">💾 저장</button>
+                <button onclick="document.getElementById('file-input').click()" style="background:#333; font-size: 0.7rem;">📂 불러오기</button>
             </div>
             <input type="file" id="file-input" style="display:none" onchange="loadPlaylist(event)">
         </div>
 
         <div class="card">
-            <h3 style="margin-top:0; font-size: 0.9rem;">플레이리스트</h3>
+            <h3 style="margin-top:0; font-size: 0.9rem;">플레이리스트 및 로그</h3>
             <div id="playlist-container"></div>
             <div id="log-area">시스템 초기화 중...</div>
-            <button onclick="enableHostMode()" style="background:transparent; color:#333; font-size:0.6rem; margin-top:10px; border:none;">GM 권한 강제 활성화 (클릭)</button>
+            <button onclick="enableHostMode()" style="background:transparent; color:#444; font-size:0.6rem; border:none; margin-top:10px;">(비상용) GM 권한 활성화</button>
         </div>
     </div>
 
@@ -83,11 +81,9 @@
             messagingSenderId: "731757785916",
             appId: "1:731757785916:web:f02ee6e3d03f5e91856439"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 1. 방 정보 및 초기 호스트 판정
         const urlParams = new URLSearchParams(window.location.search);
         let roomId = urlParams.get('room');
         let isHost = urlParams.get('host') === 'true' || !roomId;
@@ -99,24 +95,15 @@
         }
         document.getElementById('room-id').innerText = `ROOM: ${roomId}`;
 
-        // 호스트 UI 노출 함수
         function applyHostUI() {
             if (isHost) {
                 document.querySelectorAll('.host-only').forEach(el => el.style.display = 'block');
-                log("GM 권한이 활성화되었습니다.");
+                log("GM 권한 활성화됨.");
             }
         }
-        
-        // 수동 호스트 권한 활성화 함수
-        function enableHostMode() {
-            isHost = true;
-            applyHostUI();
-            render(); // 버튼 재생성
-        }
-
+        function enableHostMode() { isHost = true; applyHostUI(); render(); }
         applyHostUI();
 
-        // 2. 유튜브 플레이어
         let player;
         let isPlayerReady = false;
         function onYouTubeIframeAPIReady() {
@@ -125,7 +112,7 @@
                 playerVars: { 'autoplay': 1, 'controls': 0, 'playsinline': 1 },
                 events: {
                     'onReady': () => { isPlayerReady = true; log("✅ 플레이어 준비 완료!"); },
-                    'onError': (e) => { log("❌ 에러: " + e.data); }
+                    'onError': (e) => { log("❌ 유튜브 에러: " + e.data + " (ID 오류 가능성)"); }
                 }
             });
         }
@@ -135,7 +122,6 @@
             if (isPlayerReady) player.playVideo();
         }
 
-        // 3. 데이터 동기화
         let lastId = "";
         let lastStatus = "";
 
@@ -145,7 +131,7 @@
 
             document.getElementById('current-title').innerText = data.customTitle;
 
-            if (isPlayerReady) {
+            if (isPlayerReady && data.videoId && data.videoId.length === 11) {
                 if (lastId !== data.videoId) {
                     player.loadVideoById(data.videoId);
                     lastId = data.videoId;
@@ -161,15 +147,19 @@
             }
         });
 
-        // 4. 호스트 기능 로직
         let playlist = [];
         function addToPlaylist() {
             const url = document.getElementById('yt-url').value;
+            // 유튜브 ID 추출 정규식 강화
             const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
             const match = url.match(regExp);
             const vid = (match && match[7].length == 11) ? match[7] : false;
 
-            if (!vid) return alert("유튜브 주소가 올바르지 않습니다.");
+            if (!vid) {
+                alert("올바른 유튜브 주소를 입력하세요. (11자리 ID를 찾을 수 없음)");
+                log("❌ 잘못된 주소 입력됨");
+                return;
+            }
 
             playlist.push({
                 videoId: vid,
@@ -182,11 +172,10 @@
         }
 
         function render() {
-            const container = document.getElementById('playlist-container');
-            container.innerHTML = playlist.map((item, i) => `
+            document.getElementById('playlist-container').innerHTML = playlist.map((item, i) => `
                 <div class="playlist-item">
-                    <span>${item.customTitle} ${item.isLoop ? '🔄' : ''}</span>
-                    ${isHost ? `<button onclick="playTrack(${i})" style="width:50px; padding:3px; margin:0; font-size:0.7rem;">재생</button>` : ''}
+                    <span>${item.customTitle}</span>
+                    ${isHost ? `<button onclick="playTrack(${i})" style="width:50px; padding:3px; font-size:0.7rem;">재생</button>` : ''}
                 </div>
             `).join('');
         }
@@ -206,7 +195,7 @@
 
         function loadPlaylist(e) {
             const reader = new FileReader();
-            reader.onload = (ev) => { playlist = JSON.parse(ev.target.result); render(); };
+            reader.onload = (ev) => { try { playlist = JSON.parse(ev.target.result); render(); } catch(e){alert("파일 오류");} };
             reader.readAsText(e.target.files[0]);
         }
     </script>
