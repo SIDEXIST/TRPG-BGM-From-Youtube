@@ -21,10 +21,8 @@
         .login-card input { margin-bottom: 10px; width: 100%; display: block; }
         .login-card button { width: 100%; padding: 12px; display: block; margin-top: 5px; }
 
-        /* 사운드 활성화 및 플레이어 컨테이너 (레이아웃 간섭 차단) */
         #audio-unlock { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 40000; display: none; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; }
-        #players-container { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
-
+        
         /* 레이아웃 규격 */
         .card { background: var(--card); border-radius: 12px; padding: 18px; margin-bottom: 15px; border: 1px solid #333; position: relative; }
         .flex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; }
@@ -35,13 +33,13 @@
         input, button { background: #2c2c2c; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 6px; box-sizing: border-box; }
         button { cursor: pointer; border: none; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
 
-        /* Master Volume (S님 지시사항 유지) */
+        /* Master Volume */
         .guest-master-vol { background: #333; padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--accent); }
         .vol-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 5px; }
         .vol-title { font-size: 1.05rem; font-weight: bold; color: var(--accent); white-space: nowrap; }
         .vol-desc { font-size: 0.65rem; color: #888; flex: 1; text-align: left; margin: 0; }
 
-        /* 현재 재생 중인 BGM (제목/버튼 2단 구성) */
+        /* 현재 재생 중인 BGM */
         .active-track-item { background: #252525; padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 4px solid var(--accent); }
         .active-title-line { font-weight: bold; color: var(--accent); font-size: 0.95rem; margin-bottom: 15px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .active-controls-line { display: flex; gap: 4px; align-items: center; width: 100%; }
@@ -51,10 +49,12 @@
         .btn-delete { background: #444; color: #fff; flex: 1.2 !important; height: 28px; }
         .btn-vol-lavender { background: var(--primary) !important; color: #000 !important; font-weight: bold; min-width: 80px !important; }
 
-        /* [4] 재생 바 (Seeking 불가 설정) */
-        .slider-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; width: 100%; pointer-events: none; }
-        input[type="range"] { -webkit-appearance: none; height: 6px; border-radius: 3px; outline: none; background: #222; border: 1px solid #333; flex: 1; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+        /* [1] 재생 바: 클릭 및 조작 원천 차단 */
+        .slider-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; width: 100%; pointer-events: none !important; }
+        input[type="range"].progress-bar { -webkit-appearance: none; height: 6px; border-radius: 3px; outline: none; background: #222; border: 1px solid #333; flex: 1; pointer-events: none !important; }
+        input[type="range"].progress-bar::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: var(--accent); cursor: default; pointer-events: none !important; }
+        
+        /* 볼륨 슬라이더는 조작 가능해야 함 */
         .vol-slider { background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--p), #444 var(--p)) !important; border: none !important; pointer-events: auto !important; }
         .time-text { font-size: 0.65rem; color: #888; min-width: 80px; text-align: right; font-family: monospace; }
 
@@ -76,7 +76,7 @@
         .user-tag.host { border-color: var(--primary); color: var(--primary); }
         #log-area { font-size: 0.8rem; color: #aaa; background: #000; padding: 12px; border-radius: 5px; height: 120px; overflow-y: auto; border: 1px solid #333; line-height: 1.6; }
         
-        /* 곡 추가 3줄 고정 */
+        /* 곡 추가 영역 */
         .host-panel-container { display: flex; flex-direction: column; gap: 8px; }
         .add-music-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .add-music-header-controls { display: flex; align-items: center; gap: 10px; }
@@ -86,6 +86,9 @@
 
         .footer { text-align: center; font-size: 0.6rem; color: #444; margin-top: 30px; margin-bottom: 20px; }
         .host-only { display: none; }
+
+        /* [3] 마침표 박멸: 플레이어 컨테이너 격리 */
+        #players-container { position: fixed; top: -100px; left: -100px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -207,7 +210,7 @@
                     const div = document.createElement('div'); div.className = 'active-track-item';
                     const s = track.status, l = track.loop, vol = track.volume || 100;
                     let controlsHTML = isHost ? `<div class="active-controls-line"><button class="btn-status btn-vol-lavender" onclick="openVolModal('active', '${vid}')">볼륨: ${vol}%</button><button class="btn-status ${l ? 'active' : ''}" onclick="db.ref('rooms/${roomId}/active/${vid}/loop').set(${!l})">${l ? '반복' : '1회'}</button><button class="btn-status ${s==='playing'?'active':''}" onclick="db.ref('rooms/${roomId}/active/${vid}/status').set('playing')">재생</button><button class="btn-status ${s==='paused'?'active':''}" onclick="db.ref('rooms/${roomId}/active/${vid}/status').set('paused')">일시정지</button><button class="btn-status ${s==='stopped'?'active':''}" onclick="db.ref('rooms/${roomId}/active/${vid}/status').set('stopped')">정지</button><button class="btn-status btn-delete" onclick="db.ref('rooms/${roomId}/active/${vid}').remove()">지우기</button></div>` : '';
-                    div.innerHTML = `<span class="active-title-line" title="${track.title}">${track.title}</span>${controlsHTML}<div class="slider-row"><input type="range" id="bar-${vid}" value="0" min="0" step="1" disabled><span class="time-text" id="time-${vid}">0:00 / 0:00</span></div>`;
+                    div.innerHTML = `<span class="active-title-line" title="${track.title}">${track.title}</span>${controlsHTML}<div class="slider-row"><input type="range" class="progress-bar" id="bar-${vid}" value="0" min="0" step="1" disabled><span class="time-text" id="time-${vid}">0:00 / 0:00</span></div>`;
                     uiContainer.appendChild(div);
                     if (!players[vid]) createPlayer(vid, track.loop, track.title, s);
                     else if (players[vid].getPlayerState) { if (s === 'playing') players[vid].playVideo(); else if (s === 'paused') players[vid].pauseVideo(); else if (s === 'stopped') { players[vid].pauseVideo(); players[vid].seekTo(0); } players[vid].setVolume(((track.volume || 100) * myMasterVol) / 100); }
@@ -240,14 +243,17 @@
         async function saveEdit() { const nt = document.getElementById('edit-title').value, nu = document.getElementById('edit-url').value, nv = nu.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1]; if (nt) playlist[editingIndex].title = nt; if (nv) { playlist[editingIndex].url = nu; playlist[editingIndex].id = nv; } await db.ref(`rooms/${roomId}/playlist`).set(playlist); closeModal('edit-modal'); }
         function closeModal(mId) { document.getElementById(mId).style.display = 'none'; }
         function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; }
+
         async function executeSoftReset() { 
             const rRef = db.ref(`rooms/${roomId}`);
             await rRef.child('playlist').set(null); 
             await rRef.child('active').set(null); 
             playlist = []; render(); 
+            // 권한 강제 유지
             document.querySelectorAll('.host-only').forEach(el => el.style.display = 'block');
             log("🧹 시스템 초기화 완료."); closeModal('reset-modal'); 
         }
+
         function savePlaylistFile() { const fn = prompt("파일명:", `playlist_${roomName}`); if (!fn) return; const blob = new Blob([JSON.stringify(playlist)], {type: "application/json"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${fn}.json`; a.click(); }
         async function loadPlaylist(e) { const reader = new FileReader(); reader.onload = async (ev) => { playlist = JSON.parse(ev.target.result); await db.ref(`rooms/${roomId}/playlist`).set(playlist); }; reader.readAsText(e.target.files[0]); }
         function log(msg) { const area = document.getElementById('log-area'); if(area) { area.innerHTML += `<div>> ${msg}</div>`; area.scrollTop = area.scrollHeight; } }
