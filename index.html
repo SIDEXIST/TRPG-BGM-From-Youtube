@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TRPG BGM from Youtube</title>
     <style>
-        :root { --primary: #bb86fc; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #00ffff; --grey: #555; }
+        :root { --primary: #bb86fc; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #00ffff; --grey: #333; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 600px; display: none; }
         
@@ -19,49 +19,53 @@
         input, button { background: #2c2c2c; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 6px; margin: 5px 0; width: 100%; box-sizing: border-box; }
         button { cursor: pointer; background: #3700b3; border: none; font-weight: bold; }
         
-        /* [4] My Master Volume 헤더 최적화 */
         .guest-master-vol { background: #333; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--accent); }
         .vol-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; gap: 10px; }
         .vol-desc { font-size: 0.65rem; color: #888; flex: 1; text-align: right; }
 
-        /* [5] 버튼 상태 색상 */
         .btn-status { flex: 1; padding: 6px; font-size: 0.7rem; margin: 0; color: white; background: var(--grey); }
         .btn-status.active { background: var(--accent); color: #000; }
 
-        /* 다중 재생 UI */
         .active-track-item { background: #252525; padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 4px solid var(--accent); }
         .active-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .active-title { font-weight: bold; color: var(--accent); font-size: 0.95rem; }
         .active-controls { display: flex; gap: 5px; width: 60%; align-items: center; }
         
-        .slider-group { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
-        .slider-label { font-size: 0.7rem; color: #aaa; min-width: 80px; }
-        .vol-text { font-size: 0.75rem; min-width: 35px; text-align: right; cursor: pointer; color: var(--accent); text-decoration: underline; }
-        input[type="range"] { cursor: pointer; height: 6px; accent-color: var(--accent); margin: 0; flex: 1; }
+        /* [1] 볼륨 게이지 여백 수정: flex 구조 및 너비 최적화 */
+        .slider-group { display: flex; align-items: center; gap: 10px; margin-top: 5px; width: 100%; }
+        .slider-label { font-size: 0.7rem; color: #aaa; min-width: 80px; flex-shrink: 0; }
+        .vol-text { font-size: 0.75rem; min-width: 45px; text-align: right; cursor: pointer; color: var(--accent); text-decoration: underline; flex-shrink: 0; }
+        input[type="range"] { cursor: pointer; height: 6px; accent-color: var(--accent); margin: 0; flex-grow: 1; }
         input[type="range"]:disabled { cursor: default; opacity: 0.5; pointer-events: none; }
+        
         .time-info { font-size: 0.65rem; color: #888; display: flex; justify-content: space-between; margin-top: 2px; }
 
-        /* 플레이리스트 */
-        .playlist-item { background: #252525; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333; cursor: grab; }
-        .playlist-item.dragging { opacity: 0.5; border: 2px dashed var(--primary); }
-        .item-main { display: flex; justify-content: space-between; align-items: center; }
+        .playlist-item { background: #252525; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333; cursor: grab; user-select: none; }
+        .playlist-item.dragging { opacity: 0.2; border: 2px dashed var(--accent); }
+        .item-main { display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+        .item-main * { pointer-events: auto; }
         .btn-group { display: flex; gap: 4px; align-items: center; }
         .small-btn { padding: 4px 10px; font-size: 0.7rem; width: auto; margin: 0; min-width: 40px; }
         
-        /* [2, 3] 루프 및 재생 버튼 색상 수정 */
-        .btn-loop-on { background: var(--primary) !important; color: #000; border: none; } /* 라벤더 */
-        .btn-loop-off { background: var(--grey) !important; color: white; border: none; } /* 회색 */
-        .btn-play { background: var(--accent) !important; color: #000; } /* 시안 */
-        .btn-stop { background: var(--primary) !important; color: #000; } /* 라벤더 */
+        .btn-loop-on { background: var(--primary) !important; color: #000; border: none; }
+        .btn-loop-off { background: #555 !important; color: white; border: none; }
+        .btn-play { background: var(--accent) !important; color: #000; }
+        .btn-stop { background: var(--primary) !important; color: #000; }
 
-        .item-meta { font-size: 0.65rem; color: #777; margin-top: 5px; line-height: 1.4; }
+        .item-meta { font-size: 0.65rem; color: #777; margin-top: 5px; line-height: 1.4; pointer-events: none; }
+        .item-meta a { color: #666; text-decoration: none; pointer-events: auto; }
+        
         .user-tag { display: inline-block; padding: 3px 8px; border-radius: 15px; background: #444; margin-right: 5px; margin-bottom: 5px; font-size: 0.75rem; }
         .user-tag.host { border: 1px solid var(--primary); color: var(--primary); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 30000; display: none; justify-content: center; align-items: center; }
         .modal-content { background: var(--card); padding: 25px; border-radius: 15px; width: 350px; border: 1px solid var(--accent); }
         .add-row { display: flex; gap: 10px; align-items: center; margin: 5px 0; }
-        #log-area { font-size: 0.7rem; color: #888; background: #000; padding: 10px; border-radius: 5px; height: 100px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; }
+        
+        /* [5] 시스템 로그 구역 분리 */
+        #log-area-container { margin-top: 15px; }
+        #log-area { font-size: 0.7rem; color: #888; background: #000; padding: 12px; border-radius: 5px; height: 100px; overflow-y: auto; border: 1px solid #333; }
+        
         .footer { text-align: center; font-size: 0.65rem; color: #444; margin-top: 30px; margin-bottom: 20px; }
         .host-only { display: none; }
     </style>
@@ -111,7 +115,7 @@
             <div class="vol-header">
                 <span style="font-weight:bold; color:var(--accent); font-size:0.9rem; white-space:nowrap;">My Master Volume</span>
                 <p class="vol-desc">* 다른 사람에게 영향 없이 나에게만 들리는 음량입니다.</p>
-                <span id="guest-vol-text" class="vol-text" onclick="openVolModal('master')">100%</span>
+                <span id="guest-vol-text" class="vol-text" title="클릭하여 볼륨 조절" onclick="openVolModal('master')">100%</span>
             </div>
             <input type="range" id="guest-master-slider" min="0" max="100" value="100" oninput="changeMyMasterVolume(this.value)">
         </div>
@@ -141,7 +145,11 @@
         <div class="card">
             <h3 id="playlist-header" style="margin-top:0; font-size: 0.9rem;">플레이리스트</h3>
             <div id="playlist-container"></div>
-            <div id="log-area">시스템 로그 대기 중...</div>
+        </div>
+
+        <div class="card" id="log-area-container">
+            <h3 style="margin-top:0; font-size: 0.9rem;">시스템 로그</h3>
+            <div id="log-area">로그 대기 중...</div>
         </div>
 
         <div class="card" id="user-list-card">
@@ -176,15 +184,26 @@
             if(area) { area.innerHTML += `<div>> ${msg}</div>`; area.scrollTop = area.scrollHeight; }
         }
 
-        function enterRoom(role) {
+        // [2] 호스트 중복 입장 방지 로직 포함
+        async function enterRoom(role) {
             const rName = document.getElementById('input-room-name').value.trim();
             const nName = document.getElementById('input-nickname').value.trim();
             if (!rName || !nName) return alert("정보를 모두 입력하세요.");
+            
+            // 호스트 중복 체크
+            if (role === 'host') {
+                const usersSnap = await db.ref(`rooms/${rName}/users`).once('value');
+                const users = usersSnap.val() || {};
+                const hasHost = Object.values(users).some(u => u.isHost === true);
+                if (hasHost) return alert("이미 해당 방에 호스트가 입장해 있습니다.");
+            }
+
             roomId = rName; myNickname = nName; isHost = (role === 'host');
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('audio-unlock').style.display = 'flex';
             document.getElementById('main-container').style.display = 'block';
             document.getElementById('room-display').innerText = roomId;
+            
             if (isHost) {
                 document.querySelectorAll('.host-only').forEach(el => el.style.display = 'block');
                 document.getElementById('playlist-header').innerText = '플레이리스트 (드래그하여 순서 변경)';
@@ -192,7 +211,6 @@
             setupPresence(); initSync(); setInterval(updateAllProgress, 1000);
         }
 
-        // [5, 6] 룸 청소 로직: 호스트가 처음 입장 시 stale 데이터 청소
         function setupPresence() {
             const usersRef = db.ref(`rooms/${roomId}/users`);
             const userRef = usersRef.push();
@@ -200,10 +218,9 @@
             
             usersRef.once('value', (snap) => {
                 const users = snap.val() || {};
-                // 나를 제외하고 아무도 없다면 방의 active 데이터를 초기화 (stale 방지)
                 if (Object.keys(users).length === 0 && isHost) {
                     db.ref(`rooms/${roomId}/active`).remove();
-                    log("🧹 새로운 세션을 위해 방을 정비했습니다.");
+                    log("🧹 새로운 호스트 입장에 따라 서버 데이터를 초기화했습니다.");
                 }
                 userRef.set({ nickname: myNickname, isHost: isHost });
             });
@@ -223,7 +240,7 @@
             });
         }
 
-        function unlockAudio() { document.getElementById('audio-unlock').style.display = 'none'; log(`세션 시작: ${myNickname}`); }
+        function unlockAudio() { document.getElementById('audio-unlock').style.display = 'none'; log(`입장: ${myNickname}`); }
 
         function openVolModal(type, vid = null, index = null) {
             volTargetType = type; volTargetVid = vid; volTargetIndex = index;
@@ -270,7 +287,6 @@
                     const s = track.status;
                     const l = track.loop;
                     
-                    // [1] 현재 재생 중인 BGM: 지우기 버튼 추가
                     div.innerHTML = `
                         <div class="active-header">
                             <span class="active-title">${track.title}</span>
@@ -285,7 +301,7 @@
                         <div class="slider-group">
                             <span class="slider-label">재생 볼륨</span>
                             <input type="range" min="0" max="100" value="${track.volume || 100}" disabled>
-                            <span class="vol-text" onclick="${isHost?`openVolModal('active', '${vid}')`:''}">${track.volume || 100}%</span>
+                            <span class="vol-text" title="클릭하여 볼륨 조절" onclick="${isHost?`openVolModal('active', '${vid}')`:''}">${track.volume || 100}%</span>
                         </div>
                         <div style="display:${isHost ? 'block' : 'none'};">
                             <input type="range" class="progress-bar" id="bar-${vid}" value="0" min="0" step="1" oninput="manualSeek('${vid}', this.value)">
@@ -307,10 +323,7 @@
             });
         }
 
-        // [1] 현재 재생 리스트에서만 제거
-        function removeActiveTrack(vid) {
-            db.ref(`rooms/${roomId}/active/${vid}`).remove();
-        }
+        function removeActiveTrack(vid) { db.ref(`rooms/${roomId}/active/${vid}`).remove(); }
 
         function createPlayer(vid, initialLoop, title) {
             const div = document.createElement('div'); div.id = `player-${vid}`;
@@ -319,33 +332,24 @@
                 height: '1', width: '1', videoId: vid,
                 playerVars: { 'autoplay': 1, 'controls': 0, 'playsinline': 1 },
                 events: {
-                    'onReady': (e) => { applyCalculatedVolume(vid); e.target.playVideo(); log(`재생 시작: [${title}]`); },
-                    'onStateChange': (e) => { 
-                        if (e.data === YT.PlayerState.ENDED) {
-                            const currentLoop = (currentActiveData[vid] && currentActiveData[vid].loop);
-                            if (currentLoop) e.target.playVideo();
-                        }
-                    }
+                    'onReady': (e) => { applyCalculatedVolume(vid); e.target.playVideo(); log(`재생: [${title}]`); },
+                    'onStateChange': (e) => { if (e.data === YT.PlayerState.ENDED) { const cl = (currentActiveData[vid] && currentActiveData[vid].loop); if (cl) e.target.playVideo(); } }
                 }
             });
         }
 
         function sendIndividualControl(vid, status) { db.ref(`rooms/${roomId}/active/${vid}/status`).set(status); }
         function sendVolumeControl(vid, vol) { db.ref(`rooms/${roomId}/active/${vid}/volume`).set(parseInt(vol)); }
-        function sendLoopControl(vid, loopState) { 
-            const title = currentActiveData[vid].title || vid;
-            db.ref(`rooms/${roomId}/active/${vid}/loop`).set(loopState); 
-            log(`루프 설정 변경: [${title}] -> ${loopState ? '반복' : '1회'}`); 
-        }
+        function sendLoopControl(vid, loopState) { const title = currentActiveData[vid].title || vid; db.ref(`rooms/${roomId}/active/${vid}/loop`).set(loopState); log(`반복 설정 변경: [${title}] -> ${loopState ? '반복' : '1회'}`); }
 
         function updateAllProgress() {
             if (!isHost) return;
             Object.keys(players).forEach(vid => {
                 const p = players[vid];
                 if (p.getPlayerState) {
-                    const cur = p.getCurrentTime(); const tot = p.getDuration();
                     const bar = document.getElementById(`bar-${vid}`);
                     if (bar) {
+                        const cur = p.getCurrentTime(); const tot = p.getDuration();
                         bar.max = tot; bar.value = cur;
                         document.getElementById(`cur-${vid}`).innerText = formatTime(cur);
                         document.getElementById(`tot-${vid}`).innerText = tot > 0 ? formatTime(tot) : "0:00";
@@ -367,20 +371,22 @@
             render(); document.getElementById('yt-url').value = ""; document.getElementById('custom-title').value = "";
         }
 
-        // [2, 3] 플레이리스트 렌더링: 버튼 색상 적용
+        // [4] 드래그 앤 드롭 로직 전면 개편 (아래에서 위로 이동 문제 해결)
         function render() {
             const container = document.getElementById('playlist-container'); container.innerHTML = '';
             playlist.forEach((item, i) => {
                 const isActive = !!players[item.id];
-                const div = document.createElement('div'); div.className = 'playlist-item'; div.draggable = isHost;
+                const div = document.createElement('div'); div.className = 'playlist-item'; 
+                div.setAttribute('data-index', i);
+                div.draggable = isHost;
                 div.innerHTML = `
                     <div class="item-main">
                         <span style="font-weight:bold;">${item.title} ${isActive ? '<span style="color:var(--accent); font-size:0.7rem;">[ON]</span>' : ''}</span>
                         <div class="btn-group">
                             ${isHost ? `
-                                <div class="slider-group" style="margin-right:10px;">
+                                <div class="slider-group" style="margin-right:10px; width:auto;">
                                     <input type="range" min="0" max="100" value="${item.volume}" style="width:60px;" disabled>
-                                    <span class="vol-text" style="font-size:0.6rem;" onclick="openVolModal('playlist', null, ${i})">${item.volume}%</span>
+                                    <span class="vol-text" style="font-size:0.6rem;" title="클릭하여 볼륨 조절" onclick="openVolModal('playlist', null, ${i})">${item.volume}%</span>
                                 </div>
                                 <button class="small-btn ${item.loop?'btn-loop-on':'btn-loop-off'}" onclick="toggleLoop(${i})">${item.loop?'반복':'1회'}</button>
                                 <button class="small-btn btn-play" onclick="togglePlay(${i})">PLAY</button>
@@ -390,21 +396,45 @@
                             ` : ''}
                         </div>
                     </div>
-                    ${isHost ? `<div class="item-meta">📄 원제: ${item.originalTitle}<br>🔗 <a href="${item.url}" target="_blank" style="color:#666;">${item.url}</a></div>` : ''}
+                    ${isHost ? `<div class="item-meta">📄 원제: ${item.originalTitle}<br>🔗 <a href="${item.url}" target="_blank">${item.url}</a></div>` : ''}
                 `;
+                
                 if (isHost) {
                     div.addEventListener('dragstart', () => div.classList.add('dragging'));
-                    div.addEventListener('dragend', () => { div.classList.remove('dragging'); saveOrder(); });
+                    div.addEventListener('dragend', () => { 
+                        div.classList.remove('dragging');
+                        saveOrder();
+                    });
                 }
                 container.appendChild(div);
             });
+            
             if (isHost) {
                 container.addEventListener('dragover', e => {
                     e.preventDefault();
-                    const next = [...container.querySelectorAll('.playlist-item:not(.dragging)')].find(s => e.clientY <= s.offsetTop + s.offsetHeight / 2);
-                    container.insertBefore(document.querySelector('.dragging'), next);
+                    const afterElement = getDragAfterElement(container, e.clientY);
+                    const dragging = document.querySelector('.dragging');
+                    if (afterElement == null) {
+                        container.appendChild(dragging);
+                    } else {
+                        container.insertBefore(dragging, afterElement);
+                    }
                 });
             }
+        }
+
+        // [4] 드래그 위치 계산 함수 (정교화)
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.playlist-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
         function playlistVolume(i, vol) { playlist[i].volume = parseInt(vol); render(); }
@@ -416,7 +446,6 @@
             document.getElementById('edit-modal').style.display = 'flex';
         }
         function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
-        
         function saveEdit() {
             const newTitle = document.getElementById('edit-title').value, newUrl = document.getElementById('edit-url').value;
             const newVid = newUrl.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1];
@@ -426,8 +455,15 @@
         }
 
         function saveOrder() {
-            const titles = [...document.querySelectorAll('.playlist-item span:first-child')].map(el => el.innerText.split(' [ON]')[0].trim());
-            playlist = titles.map(t => playlist.find(p => p.title === t)).filter(p => p);
+            const itemElements = [...document.querySelectorAll('.playlist-item')];
+            const newPlaylist = [];
+            itemElements.forEach(el => {
+                const titleText = el.querySelector('span').innerText.split(' [ON]')[0].trim();
+                const track = playlist.find(p => p.title === titleText);
+                if (track) newPlaylist.push(track);
+            });
+            playlist = newPlaylist;
+            log("플레이리스트 순서가 동기화되었습니다.");
         }
 
         function togglePlay(i) {
@@ -437,21 +473,12 @@
 
         function toggleLoop(i) { playlist[i].loop = !playlist[i].loop; render(); }
         function removeTrack(i) { if(confirm("삭제?")) { playlist.splice(i, 1); render(); } }
-
-        function softReset() {
-            if(confirm("방의 재생 상태와 플레이리스트를 초기화할까요?")) {
-                db.ref(`rooms/${roomId}/active`).remove();
-                playlist = []; render(); log("🧹 시스템 소프트 초기화 완료.");
-            }
-        }
-
+        function softReset() { if(confirm("초기화?")) { db.ref(`rooms/${roomId}/active`).remove(); playlist = []; render(); log("🧹 초기화 완료."); } }
         function savePlaylist() {
-            const fileName = prompt("저장할 파일 이름을 입력하세요:", `playlist_${roomId}`);
-            if (!fileName) return;
+            const fileName = prompt("저장 파일명:", `playlist_${roomId}`); if (!fileName) return;
             const blob = new Blob([JSON.stringify(playlist)], {type: "application/json"});
             const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${fileName}.json`; a.click();
         }
-
         function loadPlaylist(e) {
             const reader = new FileReader(); reader.onload = (ev) => { playlist = JSON.parse(ev.target.result); render(); }; reader.readAsText(e.target.files[0]);
         }
