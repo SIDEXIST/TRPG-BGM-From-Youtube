@@ -14,7 +14,7 @@
         .modal-content { background: var(--card); padding: 25px; border-radius: 15px; width: 340px; border: 1px solid var(--accent); box-sizing: border-box; }
         .modal-content input { width: 100% !important; margin-bottom: 12px; display: block; box-sizing: border-box; }
         
-        /* 입장 화면 정렬 고정 */
+        /* 입장 화면 및 버튼 가운데 정렬 */
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 20000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .login-card { background: var(--card); padding: 30px; border-radius: 15px; border: 1px solid #333; text-align: center; width: 340px; display: flex; flex-direction: column; align-items: center; }
         .login-card h1 { margin-bottom: 20px; width: 100%; }
@@ -33,13 +33,13 @@
         input, button { background: #2c2c2c; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 6px; box-sizing: border-box; }
         button { cursor: pointer; border: none; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
 
-        /* Master Volume 시안색 디자인 유지 */
+        /* Master Volume */
         .guest-master-vol { background: #333; padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--accent); }
         .vol-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 5px; }
         .vol-title { font-size: 1.05rem; font-weight: bold; color: var(--accent); white-space: nowrap; }
         .vol-desc { font-size: 0.65rem; color: #888; flex: 1; text-align: left; margin: 0; }
 
-        /* 재생 중인 BGM 스타일 유지 */
+        /* 현재 재생 중인 BGM */
         .active-track-item { background: #252525; padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 4px solid var(--accent); }
         .active-title-line { font-weight: bold; color: var(--accent); font-size: 0.95rem; margin-bottom: 15px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .active-controls-line { display: flex; gap: 4px; align-items: center; width: 100%; }
@@ -55,7 +55,7 @@
         .vol-slider { background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--p), #444 var(--p)) !important; border: none !important; }
         .time-text { font-size: 0.65rem; color: #888; min-width: 80px; text-align: right; font-family: monospace; }
 
-        /* 플레이리스트 디자인 고정 */
+        /* 플레이리스트 */
         .playlist-item { background: #252525; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333; cursor: grab; user-select: none; }
         .item-main { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }
         .btn-group { display: flex; gap: 4px; align-items: center; }
@@ -67,13 +67,13 @@
         .meta-link { color: #777; text-decoration: none; font-family: monospace; flex-shrink: 0; font-size: 0.65rem; }
         .meta-title { color: #777; overflow: hidden; text-overflow: ellipsis; flex: 1; font-size: 0.65rem; }
 
-        /* 접속자 및 로그 스타일 유지 */
+        /* 접속자 및 로그 */
         #user-list-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
         .user-tag { display: flex; align-items: center; padding: 0 10px; height: 24px; border-radius: 20px; background: #333; font-size: 0.75rem; border: 1px solid #444; color: #ccc; }
         .user-tag.host { border-color: var(--primary); color: var(--primary); }
         #log-area { font-size: 0.8rem; color: #aaa; background: #000; padding: 12px; border-radius: 5px; height: 120px; overflow-y: auto; border: 1px solid #333; line-height: 1.6; }
         
-        /* 곡 추가 3줄 구성 고정 유지 */
+        /* 곡 추가 영역 */
         .host-panel-container { display: flex; flex-direction: column; gap: 8px; }
         .add-music-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .add-music-header-controls { display: flex; align-items: center; gap: 10px; }
@@ -176,7 +176,6 @@
                     isHost = true;
                     document.getElementById('login-title').innerText = "HOST LOGIN";
                     document.getElementById('btn-guest-login').innerText = "관리자 세션 복구";
-                    document.getElementById('btn-guest-login').style.background = "var(--primary)";
                 } else {
                     document.getElementById('login-title').innerText = "GUEST LOGIN";
                 }
@@ -323,7 +322,16 @@
         async function saveEdit() { const nt = document.getElementById('edit-title').value, nu = document.getElementById('edit-url').value, nv = nu.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1]; if (nt) playlist[editingIndex].title = nt; if (nv) { playlist[editingIndex].url = nu; playlist[editingIndex].id = nv; } await db.ref(`rooms/${roomId}/playlist`).set(playlist); closeModal('edit-modal'); }
         function closeModal(mId) { document.getElementById(mId).style.display = 'none'; }
         function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; }
-        async function executeSoftReset() { await db.ref(`rooms/${roomId}/active`).remove(); await db.ref(`rooms/${roomId}/playlist`).remove(); log("🧹 초기화 완료."); closeModal('reset-modal'); }
+
+        /* [중요 수정] 초기화 시 호스트 세션 보호 */
+        async function executeSoftReset() { 
+            // rooms/코드/active와 rooms/코드/playlist만 선별 삭제
+            await db.ref(`rooms/${roomId}/active`).remove(); 
+            await db.ref(`rooms/${roomId}/playlist`).remove(); 
+            log("🧹 시스템 초기화(BGM 및 리스트 삭제) 완료."); 
+            closeModal('reset-modal'); 
+        }
+
         function savePlaylistFile() { const fn = prompt("파일명:", `playlist_${roomName}`); if (!fn) return; const blob = new Blob([JSON.stringify(playlist)], {type: "application/json"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${fn}.json`; a.click(); }
         async function loadPlaylist(e) { const reader = new FileReader(); reader.onload = async (ev) => { playlist = JSON.parse(ev.target.result); await db.ref(`rooms/${roomId}/playlist`).set(playlist); }; reader.readAsText(e.target.files[0]); }
         function log(msg) { const area = document.getElementById('log-area'); if(area) { area.innerHTML += `<div>> ${msg}</div>`; area.scrollTop = area.scrollHeight; } }
