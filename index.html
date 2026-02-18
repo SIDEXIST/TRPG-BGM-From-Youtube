@@ -33,19 +33,19 @@
         input, button { background: #2c2c2c; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 6px; box-sizing: border-box; }
         button { cursor: pointer; border: none; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
 
-        /* [3] Master Volume 디자인 원상복구 및 고정 */
+        /* [수정] Master Volume 디자인 원상복구: 하얀색 원 제거 */
         .guest-master-vol { background: #333; padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--accent); }
         .vol-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
         .vol-title { font-size: 1.05rem; font-weight: bold; color: var(--accent); white-space: nowrap; }
         .vol-desc { font-size: 0.65rem; color: #888; flex: 1; text-align: left; margin: 0; }
         
-        /* 마스터 볼륨 전용 슬라이더 스타일 */
+        /* 마스터 볼륨 슬라이더: 손잡이를 시안색으로 변경하여 바와 일체화 */
         #guest-master-slider {
-            -webkit-appearance: none; width: 100%; height: 10px; border-radius: 5px; outline: none;
+            -webkit-appearance: none; width: 100%; height: 12px; border-radius: 6px; outline: none; margin-top: 5px;
             background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--p, 100%), #444 var(--p, 100%));
         }
         #guest-master-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 18px; height: 18px; background: #fff; border-radius: 50%; cursor: pointer; box-shadow: 0 0 3px #000;
+            -webkit-appearance: none; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; cursor: pointer; border: none; box-shadow: none;
         }
 
         /* 현재 재생 중인 BGM */
@@ -82,16 +82,13 @@
         .user-tag.host { border-color: var(--primary); color: var(--primary); }
         #log-area { font-size: 0.8rem; color: #aaa; background: #000; padding: 12px; border-radius: 5px; height: 120px; overflow-y: auto; border: 1px solid #333; line-height: 1.6; }
         
-        /* 곡 추가 영역 3줄 구성 고정 */
+        /* 곡 추가 영역 */
         .host-panel-container { display: flex; flex-direction: column; gap: 8px; }
         .add-music-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .add-music-header-controls { display: flex; align-items: center; gap: 10px; }
         .loop-label-wrapper { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; cursor: pointer; color: #888; white-space: nowrap; }
         .header-btn { width: auto; padding: 4px 10px; font-size: 0.65rem; margin: 0; background: #444; height: 26px; }
         .input-full { width: 100% !important; display: block; margin: 0; }
-
-        .footer { text-align: center; font-size: 0.6rem; color: #444; margin-top: 30px; margin-bottom: 20px; }
-        .host-only { display: none; }
 
         /* 마침표 박멸 격리 컨테이너 */
         #players-container { position: fixed; top: -100px; left: -100px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
@@ -146,7 +143,7 @@
                 <h3 id="playlist-header">플레이리스트</h3>
                 <div style="display:flex; gap:4px;">
                     <button class="header-btn" onclick="savePlaylistFile()">저장</button>
-                    <button class="header-btn" onclick="document.getElementById('file-input').click()">열기</button>
+                    <button class="header-btn" id="open-playlist-btn" onclick="document.getElementById('file-input').click()">열기</button>
                     <button class="header-btn" style="background:#b71c1c;" onclick="openResetModal()">초기화</button>
                 </div>
             </div>
@@ -193,7 +190,7 @@
             document.getElementById('main-container').style.display = 'block';
             document.getElementById('room-display').innerText = roomName;
             
-            // [수정] 볼륨 바 초기 스타일 적용
+            // [핵심] 볼륨 바 디자인 초기화 및 적용
             changeMyMasterVolume(myMasterVol);
 
             if (isHost) {
@@ -215,18 +212,15 @@
             Object.keys(players).forEach(vid => { if (players[vid] && players[vid].setVolume) { const sVol = (currentActiveData[vid] && currentActiveData[vid].volume !== undefined) ? currentActiveData[vid].volume : 100; players[vid].setVolume((sVol * myMasterVol) / 100); } });
         }
 
-        /* [핵심 수정] 초기화 후 기능 상실 해결 */
         async function executeSoftReset() { 
             const rRef = db.ref(`rooms/${roomId}`);
             await rRef.child('playlist').set(null); 
             await rRef.child('active').set(null); 
             playlist = []; render(); 
-            // 호스트 전용 버튼 강제 노출 상태 유지
             document.querySelectorAll('.host-only').forEach(el => el.style.display = 'block');
             log("🧹 시스템 초기화 완료."); closeModal('reset-modal'); 
         }
 
-        /* [수정] 파일 열기 로직 보강 */
         async function loadPlaylist(e) { 
             const file = e.target.files[0];
             if (!file) return;
@@ -235,7 +229,7 @@
                 try {
                     playlist = JSON.parse(ev.target.result); 
                     await db.ref(`rooms/${roomId}/playlist`).set(playlist);
-                    e.target.value = ''; // 입력값 초기화하여 같은 파일 재업로드 가능하게 함
+                    e.target.value = ''; 
                 } catch(err) { alert("유효하지 않은 플레이리스트 파일입니다."); }
             }; 
             reader.readAsText(file); 
